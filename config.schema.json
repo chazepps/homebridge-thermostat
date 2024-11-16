@@ -1,0 +1,27 @@
+{
+  "pluginAlias": "ThermostatPlugin",
+  "pluginType": "platform",
+  "singular": true,
+  "strictValidation": false,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "required": true,
+        "default": "Thermostat"
+      },
+      "temperatureSensorIP": {
+        "title": "Temperature Sensor IP",
+        "type": "string",
+        "required": true
+      },
+      "thermostatControllerIP": {
+        "title": "Thermostat Controller IP",
+        "type": "string",
+        "required": true
+      }
+    }
+  }
+}
