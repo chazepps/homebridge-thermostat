@@ -1,7 +1,0 @@
-{
-  "pluginAlias": "Thermostat",
-  "pluginType": "platform",
-  "singular": true,
-  "headerDisplay": "<p align='center'>Thermostat</p>",
-  "footerDisplay": "Please raise any issues on our [project page](https://github.com/chazepps/homebridge-thermostat/issues)."
-}
