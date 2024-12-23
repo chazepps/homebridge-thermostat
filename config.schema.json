@@ -7,21 +7,17 @@
   "schema": {
     "type": "object",
     "properties": {
-      "name": {
-        "title": "Name",
+      "motorIp": {
+        "title": "Motor IP",
         "type": "string",
         "required": true,
-        "default": "Thermostat"
+        "default": "10.10.8.1"
       },
       "sensorIp": {
         "title": "Sensor IP",
         "type": "string",
-        "required": true
-      },
-      "motorIp": {
-        "title": "Motor IP",
-        "type": "string",
-        "required": true
+        "required": true,
+        "default": "10.10.8.2"
       }
     }
   },
@@ -32,8 +28,8 @@
       "expandable": true,
       "expanded": false,
       "items": [
-        "sensorIp",
-        "motorIp"
+        "motorIp",
+        "sensorIp"
       ]
     }
   ]
