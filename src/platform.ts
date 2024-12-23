@@ -1,7 +1,7 @@
 import type { API, Characteristic, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig, Service } from 'homebridge';
 
 import { ThermostatAccessory } from './platformAccessory.js';
-import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
+import { PLATFORM_NAME, PLUGIN_NAME, ThermostatPlatformConfig } from './settings.js';
 
 export class ThermostatPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
@@ -10,14 +10,20 @@ export class ThermostatPlatform implements DynamicPlatformPlugin {
   // Map to store registered accessories using their UUIDs
   public readonly accessories: Map<string, PlatformAccessory> = new Map();
 
+  public readonly motorIp: string;
+  public readonly sensorIp: string;
+
   constructor(
     public readonly log: Logging,
-    public readonly config: PlatformConfig,
+    public readonly config: ThermostatPlatformConfig,
     public readonly api: API,
   ) {
     // Initialize Homebridge service and characteristic references
     this.Service = api.hap.Service;
     this.Characteristic = api.hap.Characteristic;
+
+    this.motorIp = config.motorIp ?? '10.10.8.1';
+    this.sensorIp = config.sensorIp ?? '10.10.8.2';
 
     this.log.debug('Platform initialization complete:', this.config.name);
 

@@ -2,17 +2,25 @@ import type { CharacteristicValue, PlatformAccessory, Service } from 'homebridge
 
 import type { ThermostatPlatform } from './platform.js';
 
+const MIN_TEMPERATURE = 10;
+const MAX_TEMPERATURE = 35;
+const MIN_STEP = 0.1;
+
 export class ThermostatAccessory {
   private service: Service;
   private currentTemperature: number = 0;
   private currentHumidity: number = 0;
-  private targetTemperature: number = 0;
-  private heaterOn: boolean = false;
+  private targetTemperature: number = 22;
+
+  private active: boolean = false;
+  private motorStatus: 'H' | 'L' = 'L';
 
   constructor(
     private readonly platform: ThermostatPlatform,
     private readonly accessory: PlatformAccessory,
   ) {
+    this.platform.log.debug('ctor...');
+
     // 액세서리 정보 설정
     this.accessory.getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Studio Z')
@@ -53,125 +61,162 @@ export class ThermostatAccessory {
     // 난방 임계값 온도 설정
     this.service.getCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature)
       .setProps({
-        minValue: 10,
-        maxValue: 30,
-        minStep: 0.1,
+        minValue: MIN_TEMPERATURE,
+        maxValue: MAX_TEMPERATURE,
+        minStep: MIN_STEP,
       })
       .onSet(this.setTargetTemperature.bind(this))
       .onGet(this.getTargetTemperature.bind(this));
 
     // 주기적으로 온도 업데이트 및 초기 상태 동기화
-    this.updateTemperature();
-    setInterval(this.updateTemperature.bind(this), 10000);
+    this.updateMotorStatus();
+    setInterval(this.updateMotorStatus.bind(this), 5_000);
+
+    this.platform.log.debug('ctor... done');
   }
 
+  private lastUpdateAt = 0;
   async getCurrentState(): Promise<CharacteristicValue> {
+    const now = Date.now();
+
+    if (now - this.lastUpdateAt < 2000) {
+      return {
+        temperature: this.currentTemperature,
+        humidity: this.currentHumidity,
+      };
+    }
+
+    this.platform.log.debug('getCurrentState...');
     // 현재 온도 가져오기
-    const response = await fetch('http://10.1.0.91');
+    const response = await fetch(`http://${this.platform.sensorIp}/`);
     const data = await response.text();
     const [temperature, humidity] = data.split(',').map(Number);
 
     this.currentTemperature = temperature;
     this.currentHumidity = humidity;
 
-    this.platform.log.debug(`현재 온도: ${this.currentTemperature}°C`);
-    return {
+    const result = {
       temperature: this.currentTemperature,
       humidity: this.currentHumidity,
     };
+
+    this.platform.log.debug('getCurrentState... done', result);
+
+    this.lastUpdateAt = now;
+
+    return result;
   }
 
   async getCurrentTemperature(): Promise<CharacteristicValue> {
+    this.platform.log.debug('getCurrentTemperature...');
     if (this.currentTemperature === 0) {
+      this.platform.log.debug('getCurrentTemperature... init status');
       await this.getCurrentState();
     }
+
+    this.platform.log.debug('getCurrentTemperature... done', this.currentTemperature);
 
     return this.currentTemperature;
   }
 
   async getCurrentHumidity(): Promise<CharacteristicValue> {
+    this.platform.log.debug('getCurrentHumidity...');
+
     if (this.currentHumidity === 0) {
+      this.platform.log.debug('getCurrentHumidity... init status');
       await this.getCurrentState();
     }
+
+    this.platform.log.debug('getCurrentHumidity... done', this.currentHumidity);
 
     return this.currentHumidity;
   }
 
   async setActive(value: CharacteristicValue) {
-    const isActive = value as boolean;
-    this.platform.log.debug('Heater 상태 설정 ->', isActive ? 'On' : 'Off');
-    if (isActive) {
-      // Heater를 켭니다
-      await fetch('http://10.1.0.99/H', { method: 'POST' });
-      this.heaterOn = true;
-    } else {
-      // Heater를 끕니다
-      await fetch('http://10.1.0.99/L', { method: 'POST' });
-      this.heaterOn = false;
-    }
+    this.platform.log.debug(`setActive... active: ${this.active ? 'Active' : 'Inactive'} -> ${value ? 'Active' : 'Inactive'}`);
+
+    this.active = value as boolean;
+    this.platform.log.debug('setActive... done');
   }
 
   async getActive(): Promise<CharacteristicValue> {
-    return this.heaterOn ? 1 : 0;
+    this.platform.log.debug(`getActive... active: ${this.active ? 'Active' : 'Inactive'}`);
+    return this.active ? 1 : 0;
   }
 
   async getCurrentHeaterCoolerState(): Promise<CharacteristicValue> {
-    if (this.heaterOn) {
+    this.platform.log.debug('getCurrentHeaterCoolerState...');
+
+    if (this.active) {
+      this.platform.log.debug('getCurrentHeaterCoolerState... done', this.platform.Characteristic.CurrentHeaterCoolerState.HEATING);
       return this.platform.Characteristic.CurrentHeaterCoolerState.HEATING;
     } else {
+      this.platform.log.debug('getCurrentHeaterCoolerState... done', this.platform.Characteristic.CurrentHeaterCoolerState.INACTIVE);
       return this.platform.Characteristic.CurrentHeaterCoolerState.INACTIVE;
     }
   }
 
   async setTargetHeaterCoolerState(value: CharacteristicValue) {
-    // 난방 모드만 지원하므로 추가 로직은 필요하지 않습니다
-    this.platform.log.debug('목표 HeaterCooler 상태 설정 ->', value);
+    this.platform.log.debug('setTargetHeaterCoolerState...');
+    this.platform.log.debug('setTargetHeaterCoolerState... done');
   }
 
   async getTargetHeaterCoolerState(): Promise<CharacteristicValue> {
+    this.platform.log.debug('getTargetHeaterCoolerState...');
+    this.platform.log.debug('getTargetHeaterCoolerState... done', this.platform.Characteristic.TargetHeaterCoolerState.HEAT);
     return this.platform.Characteristic.TargetHeaterCoolerState.HEAT;
   }
 
   async setTargetTemperature(value: CharacteristicValue) {
     const temp = value as number;
-    if (temp < 10) {
-      this.platform.log.warn(`설정된 온도 ${temp}°C가 최소값인 10°C보다 낮습니다. 최소값으로 설정됩니다.`);
-      this.targetTemperature = 10;
-    } else if (temp > 30) {
-      this.platform.log.warn(`설정된 온도 ${temp}°C가 최대값인 30°C보다 높습니다. 최대값으로 설정됩니다.`);
-      this.targetTemperature = 30;
+    this.platform.log.debug('setTargetTemperature... target: ', temp);
+    if (temp < MIN_TEMPERATURE) {
+      this.platform.log(`setTargetTemperature... target: ${temp}°C is less than ${MIN_TEMPERATURE}°C, set to ${MIN_TEMPERATURE}°C`);
+      this.targetTemperature = MIN_TEMPERATURE;
+    } else if (temp > MAX_TEMPERATURE) {
+      this.platform.log(`setTargetTemperature... target: ${temp}°C is greater than ${MAX_TEMPERATURE}°C, set to ${MAX_TEMPERATURE}°C`);
+      this.targetTemperature = MAX_TEMPERATURE;
     } else {
       this.targetTemperature = temp;
     }
-    this.platform.log.debug('목표 온도 설정 ->', this.targetTemperature);
 
-    // 현재 온도와 비교하여 Heater 제어
-    if (this.currentTemperature < this.targetTemperature && !this.heaterOn) {
-      await fetch('http://10.1.0.99/H', { method: 'POST' });
-      this.heaterOn = true;
-      this.platform.log.debug('Heater를 켰습니다');
-    } else if (this.currentTemperature >= this.targetTemperature && this.heaterOn) {
-      await fetch('http://10.1.0.99/L', { method: 'POST' });
-      this.heaterOn = false;
-      this.platform.log.debug('Heater를 껐습니다');
-    }
+    this.platform.log.debug('setTargetTemperature... done', this.targetTemperature);
   }
 
-  async getTargetTemperature(): Promise<CharacteristicValue> {
-    return this.targetTemperature;
-  }
-
-  private async updateTemperature() {
+  async updateMotorStatus() {
+    this.platform.log.debug('updateMotorStatus...');
     await this.getCurrentState();
 
     this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.currentTemperature);
     this.service.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, this.currentHumidity);
 
-    // 온도 변화에 따라 Heater 제어 업데이트
-    if (this.currentTemperature < this.targetTemperature && !this.heaterOn) {
-      await this.setActive(1);
-    } else if (this.currentTemperature >= this.targetTemperature && this.heaterOn) {
-      await this.setActive(0);
+    const motorStatus = this.motorStatus;
+
+    if (!this.active) {
+      this.motorStatus = 'L';
     }
+
+    const diff = this.targetTemperature - this.currentTemperature;
+    if (diff >= 0.5) {
+      this.motorStatus = 'H';
+    }
+    if (diff <= -0.5) {
+      this.motorStatus = 'L';
+    }
+
+    this.platform.log.debug(`updateMotorStatus... motorStatus: ${motorStatus} -> ${this.motorStatus}`);
+
+    try {
+      await fetch(`http://${this.platform.motorIp}/${this.motorStatus}`, { method: 'POST' });
+    } catch (error) {
+      this.platform.log.error('updateMotorStatus... error', error);
+    }
+
+    this.platform.log.debug('updateMotorStatus... done', this.motorStatus);
+  }
+
+  async getTargetTemperature(): Promise<CharacteristicValue> {
+    this.platform.log.debug('## getTargetTemperature');
+    return this.targetTemperature;
   }
 }
