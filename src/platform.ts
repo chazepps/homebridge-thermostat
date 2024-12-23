@@ -1,4 +1,4 @@
-import type { API, Characteristic, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig, Service } from 'homebridge';
+import type { API, Characteristic, DynamicPlatformPlugin, Logging, PlatformAccessory, Service } from 'homebridge';
 
 import { ThermostatAccessory } from './platformAccessory.js';
 import { PLATFORM_NAME, PLUGIN_NAME, ThermostatPlatformConfig } from './settings.js';

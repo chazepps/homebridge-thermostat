@@ -157,7 +157,7 @@ export class ThermostatAccessory {
   }
 
   async setTargetHeaterCoolerState(value: CharacteristicValue) {
-    this.platform.log.debug('Setting target HeaterCooler state...');
+    this.platform.log.debug('Setting target HeaterCooler state...', value);
     this.platform.log.debug('Target HeaterCooler state set successfully.');
   }
 
