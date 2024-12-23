@@ -2,50 +2,38 @@
   "pluginAlias": "Thermostat",
   "pluginType": "platform",
   "singular": true,
-  "headerDisplay": "<p align='center'><img height='100px' src='https://raw.githubusercontent.com/chazepps/homebridge-Thermostat/latest/branding/logo.png'></p>\n\nThe **Thermostat** plugin allows you to control Thermostat Devices. \n\nTo get started link your Thermostat account.\n\n1. Download Thermostat App on App Store or Google Play Store.\n\n2. Register a Thermostat account and log in into your account.\n\n3. Input your `Email` and `Password` into the parameters below.",
-  "footerDisplay": "Please raise any issues on our [project page](https://github.com/chazepps/homebridge-Thermostat/issues).\n\nIf you would like to have other Thermostat Devices added to this plugin fill out [Feature Request Form](https://github.com/chazepps/homebridge-Thermostat/issues/new?assignees=&labels=&template=feature-request.md).\n\n[Thermostat Website](https://hej.life/)",
+  "headerDisplay": "<p align='center'>Thermostat</p>",
+  "footerDisplay": "Please raise any issues on our [project page](https://github.com/chazepps/homebridge-thermostat/issues).",
   "schema": {
     "type": "object",
     "properties": {
       "name": {
-        "type": "string",
         "title": "Name",
+        "type": "string",
+        "required": true,
         "default": "Thermostat"
       },
-      "credentials": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "title": "Email",
-            "type": "string",
-            "x-schema-form": {
-              "type": "email"
-            }
-          },
-          "password": {
-            "title": "Password",
-            "type": "string",
-            "x-schema-form": {
-              "type": "password"
-            }
-          }
-        },
-        "required": [
-          "email",
-          "password"
-        ]
+      "sensorIp": {
+        "title": "Sensor IP",
+        "type": "string",
+        "required": true
+      },
+      "motorIp": {
+        "title": "Motor IP",
+        "type": "string",
+        "required": true
       }
     }
   },
   "layout": [
     {
       "type": "fieldset",
-      "title": "Thermostat Account Info",
+      "title": "Thermostat Info",
       "expandable": true,
       "expanded": false,
       "items": [
-        "credentials.email",
-        "credentials.password"
+        "sensorIp",
+        "motorIp"
       ]
     }
   ]
