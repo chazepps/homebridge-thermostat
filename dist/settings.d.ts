@@ -2,7 +2,7 @@ import { PlatformConfig } from 'homebridge';
 /**
  * This is the name of the platform that users will use to register the plugin in the Homebridge config.json
  */
-export declare const PLATFORM_NAME = "thermostat";
+export declare const PLATFORM_NAME = "Thermostat";
 /**
  * This must match the name of your plugin as defined the package.json
  */
