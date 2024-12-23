@@ -1,8 +1,9 @@
 {
-  "pluginAlias": "ThermostatPlugin",
+  "pluginAlias": "Thermostat",
   "pluginType": "platform",
   "singular": true,
-  "strictValidation": false,
+  "headerDisplay": "<p align='center'>Thermostat</p>",
+  "footerDisplay": "Please raise any issues on our [project page](https://github.com/chazepps/homebridge-thermostat/issues).",
   "schema": {
     "type": "object",
     "properties": {
@@ -12,13 +13,13 @@
         "required": true,
         "default": "Thermostat"
       },
-      "temperatureSensorIP": {
-        "title": "Temperature Sensor IP",
+      "sensorIp": {
+        "title": "Sensor IP",
         "type": "string",
         "required": true
       },
-      "thermostatControllerIP": {
-        "title": "Thermostat Controller IP",
+      "motorIp": {
+        "title": "Motor IP",
         "type": "string",
         "required": true
       }
