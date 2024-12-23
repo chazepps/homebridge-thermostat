@@ -24,5 +24,17 @@
         "required": true
       }
     }
-  }
+  },
+  "layout": [
+    {
+      "type": "fieldset",
+      "title": "Thermostat Info",
+      "expandable": true,
+      "expanded": false,
+      "items": [
+        "sensorIp",
+        "motorIp"
+      ]
+    }
+  ]
 }
