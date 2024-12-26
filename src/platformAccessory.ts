@@ -87,13 +87,17 @@ export class ThermostatAccessory {
     }
 
     this.platform.log.debug('Fetching current state...');
-    // Fetch current temperature
-    const response = await fetch(`http://${this.platform.sensorIp}/`);
-    const data = await response.text();
-    const [temperature, humidity] = data.split(',').map(Number);
+    try {
+      // Fetch current temperature
+      const response = await fetch(`http://${this.platform.sensorIp}/`);
+      const data = await response.text();
+      const [temperature, humidity] = data.split(',').map(Number);
 
-    this.currentTemp = temperature;
-    this.currentHumidity = humidity;
+      this.currentTemp = temperature;
+      this.currentHumidity = humidity;
+    } catch (error) {
+      this.platform.log.error('Error fetching current state:', error);
+    }
 
     const result = {
       temperature: this.currentTemp,
