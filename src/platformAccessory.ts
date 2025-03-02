@@ -198,14 +198,14 @@ export class ThermostatAccessory {
 
     if (!this.isActive) {
       this.motorState = 'L';
-    }
-
-    const diff = this.targetTemp - this.currentTemp;
-    if (diff >= 0.5) {
-      this.motorState = 'H';
-    }
-    if (diff <= -0.5) {
-      this.motorState = 'L';
+    } else {
+      const diff = this.targetTemp - this.currentTemp;
+      if (diff >= 0.5) {
+        this.motorState = 'H';
+      }
+      if (diff <= -0.5) {
+        this.motorState = 'L';
+      }
     }
 
     this.platform.log.debug(`Motor status updated: ${previousMotorState} -> ${this.motorState}`);
